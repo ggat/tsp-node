@@ -10,6 +10,8 @@
   "author": "Giga Gatenashvili",
   "license": "ISC",
   "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.1",
     "webpack": "^4.41.1",
     "webpack-cli": "^3.3.9"
   },
