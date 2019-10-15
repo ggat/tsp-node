@@ -32,11 +32,12 @@ function* createBipartiteGraphs(edgeWeights, oddVertices) {
     const uVertexSets = list.combinations(oddVertices, oddVertices.length / 2);
 
     // create graphs
-    for (let i = 0; i < uVertexSets.length; i++) {
+    for(const uSet of uVertexSets) {
         const
-            uSet = uVertexSets[i].sort(),
             vSet = [],
             weightMatrix = [];
+
+        uSet.sort();
 
         for (let j = 0; j < oddVertices.length; j++) {
             if(uSet.indexOf(oddVertices[j]) === -1) {

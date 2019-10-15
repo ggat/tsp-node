@@ -28,17 +28,16 @@ function product(arr, length = 1) {
     return result;
 }
 
-//todo improve reduce part
-function combinations(arr, l) {
+function* combinations(arr, l) {
 
     const stack = [];
     const result = [];
 
-    function recurse(of, startFrom, arr) {
+    function* recurse(of, startFrom, arr) {
         const left = arr.slice(startFrom, arr.length);
 
         if (of.length === l) {
-            result.push(of);
+            yield of;
         }
 
         for (let i = 0; i < left.length; i++) {
@@ -46,10 +45,12 @@ function combinations(arr, l) {
         }
     }
 
-    arr.forEach((itm, i) => recurse([itm], i + 1, arr));
+    for (let i = 0; i < arr.length; i++) {
+        stack.push([[arr[i]], i +1, arr]);
+    }
 
     while(stack.length) {
-        recurse.apply(null, stack.pop());
+        yield* recurse.apply(null, stack.pop());
     }
 
     return result;
