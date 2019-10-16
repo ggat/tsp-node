@@ -130,6 +130,7 @@ function alternateToFindAssignments(src, n) {
                 console.log('no open zeros left and there is no enough assignments. adding more zeros...')
                 src = addZeros(src, tmpMarkTable, n);
                 assignmentCount = 0;
+                markedTable = resetMarkTable(n);
             }
         } else {
 
@@ -146,6 +147,19 @@ function alternateToFindAssignments(src, n) {
             return matches;
         }
     }
+}
+
+function resetMarkTable(n) {
+    const markedTable = [];
+
+    for (let r = 0; r < n; r++) {
+        markedTable[r] = [];
+        for (let c = 0; c < n; c++) {
+            markedTable[r][c] = PRISTINE;
+        }
+    }
+
+    return markedTable;
 }
 
 function hasOpenZeros(src, markedTable, n) {
