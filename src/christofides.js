@@ -28,6 +28,9 @@ function distance(a, b) {
  * @returns {[]}
  */
 function* createBipartiteGraphs(edgeWeights, oddVertices) {
+
+    //todo: we are creating graphs with same combination of vertices but alternating vSet, uSet
+    //  because for matching sides does not matter we are doing twice more redundant work.
     const uVertexSets = list.combinations(oddVertices, oddVertices.length / 2);
 
     // create graphs

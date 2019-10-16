@@ -1,4 +1,3 @@
-//TODO: We don't need duplication
 module.exports = function fleury(multiGraph) {
     multiGraph = multiGraph.map(edge => [...edge]);
 
@@ -51,7 +50,7 @@ function findVertexEdges(multigraph, v) {
     return edges;
 }
 
-//TODO: Optimise this function
+//todo: dont't like how this is written
 function reachableVertexCountOf(combinedMst, currentVertex) {
 
     const visited = [currentVertex];
