@@ -1,7 +1,6 @@
-// const munkres = require('./munkers');
+const munkres = require('./munkres');
 const list = require('./lists');
 const prims = require('./prims');
-const munkres = require('munkres-js');
 const fleury = require('./fleury.js');
 
 function createWeightMatrix(graph) {

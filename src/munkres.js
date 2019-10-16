@@ -2,193 +2,40 @@ const   PRISTINE = 0,
         MARKED = 1,
         CANCELED = 2;
 
-function munkres(adjacencyMatrix) {
-
-    //todo: better way to copy this one?
-
-    let src = adjacencyMatrix.map(itm => [...itm]);
-    const n = src.length;
-
-    //initial subtraction
-    for (let r = 0; r < n; r++) {
-        const minEntry = Math.min(...src[r]);
-        for (let c = 0; c < n; c++) {
-            src[r][c] = src[r][c] - minEntry;
-        }
-    }
-
-    for (let c = 0; c < n; c++) {
-        const minEntry = Math.min(...src.map(row => row[c]));
-        for (let r = 0; r < n; r++) {
-            src[r][c] = src[r][c] - minEntry;
-        }
-    }
-
-    return alternateToFindAssignments(src, n);
+function Munkres(adjMatrix) {
+    this.adjMatrix = adjMatrix.map(itm => [...itm]);
+    this.n = this.adjMatrix.length;
+    this.resetMarkTable();
 }
 
-function findSmallestValue(matrix, crossedRows, crossedCols) {
+Munkres.prototype.findSmallestValue = function() {
     let smallestEntry = Infinity;
-    for (let r = 0; r < matrix.length; r++) {
-        for (let c = 0; c < matrix[r].length; c++) {
+    for (let r = 0; r < this.adjMatrix.length; r++) {
+        for (let c = 0; c < this.adjMatrix[r].length; c++) {
 
-            if (crossedRows.indexOf(r) === -1 && crossedCols.indexOf(c) === -1) {
-                if (matrix[r][c] < smallestEntry) {
-                    smallestEntry = matrix[r][c];
+            if (this.coveredRows.indexOf(r) === -1 && this.coveredCols.indexOf(c) === -1) {
+                if (this.adjMatrix[r][c] < smallestEntry) {
+                    smallestEntry = this.adjMatrix[r][c];
                 }
             }
         }
     }
 
     return smallestEntry;
-}
+};
 
-function alternateToFindAssignments(src, n) {
+Munkres.prototype.lines = function() {
 
-    let markedTable = [];
-
-    let assignmentCount = 0;
-
-    for (let r = 0; r < n; r++) {
-        markedTable[r] = [];
-        for (let c = 0; c < n; c++) {
-            markedTable[r][c] = PRISTINE;
-        }
-    }
-
-    while(true) {
-
-        let tmpMarkTable = markedTable.map(row => [...row]);
-        // mark rows
-        for (let r = 0; r < n; r++) {
-            let zeroCount = 0, zeroIndex = -1;
-
-            // check if has pristine zeros
-            for (let c = 0; c < n; c++) {
-                if(src[r][c] === 0 && markedTable[r][c] === PRISTINE) {
-                    zeroCount++;
-                    zeroIndex = c;
-                }
-            }
-
-            // has single zero and it was not canceled of assigned in this iteration
-            if(zeroCount === 1 && tmpMarkTable[r][zeroIndex] === PRISTINE) {
-
-                // Increase assignment count
-                assignmentCount++;
-
-                // cancel all other zeros in same col
-                for (let r = 0; r < n; r++) {
-                    if(src[r][zeroIndex] === 0) {
-                        tmpMarkTable[r][zeroIndex] = CANCELED
-                    }
-                }
-
-                // mark this the zero we found in this row
-                tmpMarkTable[r][zeroIndex] = MARKED;
-            }
-        }
-
-        // mark cols
-        for (let c = 0; c < n; c++) {
-            let zeroCount = 0, zeroIndex = -1;
-
-            for (let r = 0; r < n; r++) {
-
-                if(src[r][c] === 0 && markedTable[r][c] === PRISTINE) {
-                    zeroCount++;
-                    zeroIndex = r;
-                }
-            }
-
-            // has single zero and it was not canceled in this iteration
-            if(zeroCount === 1  && tmpMarkTable[zeroIndex][c] === PRISTINE) {
-
-                // Increase assignment count
-                assignmentCount++;
-
-                // cancel all other zeros in same row
-                for (let c = 0; c < n; c++) {
-                    if(src[zeroIndex][c] === 0) {
-                        tmpMarkTable[zeroIndex][c] = CANCELED;
-                    }
-                }
-
-                // mark this the zero we found in this col
-                tmpMarkTable[zeroIndex][c] = MARKED;
-            }
-        }
-
-        if(assignmentCount < n) {
-
-            // if has open zeroes continue marking assignments with respect to currently marked and canceled zeros
-            // otherwise add more zeros and then continue with clean markTable and reset assignment count
-            if(hasOpenZeros(src, tmpMarkTable, n)) {
-                console.log('there is no enough assignments and there are some open zeros')
-                markedTable = tmpMarkTable;
-            } else {
-                console.log('no open zeros left and there is no enough assignments. adding more zeros...')
-                src = addZeros(src, tmpMarkTable, n);
-                assignmentCount = 0;
-                markedTable = resetMarkTable(n);
-            }
-        } else {
-
-            const matches = [];
-
-            for (let r = 0; r < n; r++) {
-                for (let c = 0; c < n; c++) {
-                    if(tmpMarkTable[r][c] === MARKED) {
-                        matches.push([r,c]);
-                    }
-                }
-            }
-
-            return matches;
-        }
-    }
-}
-
-function resetMarkTable(n) {
-    const markedTable = [];
-
-    for (let r = 0; r < n; r++) {
-        markedTable[r] = [];
-        for (let c = 0; c < n; c++) {
-            markedTable[r][c] = PRISTINE;
-        }
-    }
-
-    return markedTable;
-}
-
-function hasOpenZeros(src, markedTable, n) {
-    for (let r = 0; r < n; r++) {
-        for (let c = 0; c < n; c++) {
-            if(src[r][c] === 0 && markedTable[r][c] === PRISTINE) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-function lines(src, markedTable, n) {
-
-    // todo: we are considering that there will be only one row without assignment, check if it's
-    //  possible to have more rows without assignment, in that case we have to collect rows instead of picking one.
     // find a row without assignment and get zero indexes - cols from it
-
     let
         pickedRows =[],
         pickedCols = [];
 
     let rowWithoutAssignment = null;
-    for (let r = 0; r < n; r++) {
+    for (let r = 0; r < this.n; r++) {
         let assignment = false;
-        for (let c = 0; c < n; c++) {
-            if(markedTable[r][c] === MARKED) {
+        for (let c = 0; c < this.n; c++) {
+            if(this.markedTable[r][c] === MARKED) {
                 assignment = true;
             }
         }
@@ -202,16 +49,16 @@ function lines(src, markedTable, n) {
     pickedRows.push(rowWithoutAssignment);
 
     // find zeros in a row without assignment and pick cols with this zeros
-    for (let c = 0; c < n; c++) {
-        if(src[rowWithoutAssignment][c] === 0) {
+    for (let c = 0; c < this.n; c++) {
+        if(this.adjMatrix[rowWithoutAssignment][c] === 0) {
             pickedCols.push(c);
         }
     }
 
     // find out zeros with assignment in picked columns and mark rows with this zeros
-    for (let r = 0; r < n; r++) {
+    for (let r = 0; r < this.n; r++) {
         for (let c = 0; c < pickedCols.length; c++) {
-            if(markedTable[r][pickedCols[c]] === MARKED) {
+            if(this.markedTable[r][pickedCols[c]] === MARKED) {
                 pickedRows.push(r);
             }
         }
@@ -219,45 +66,184 @@ function lines(src, markedTable, n) {
 
     // cover unmarked rows
     const tmp = [];
-    for (let r = 0; r < n; r++) {
+    for (let r = 0; r < this.n; r++) {
         if(pickedRows.indexOf(r) === -1) {
             tmp.push(r);
         }
     }
     pickedRows = tmp;
 
-    return [pickedRows, pickedCols];
-}
+    this.coveredRows = pickedRows;
+    this.coveredCols = pickedCols;
+};
 
-function addZeros(src, markedTable, n) {
-
-    const [coveredRows, coveredCols] = lines(src, markedTable, n);
-    const smallestValue = findSmallestValue(src, coveredRows, coveredCols);
-    const result = src.map(row => [...row]);
+Munkres.prototype.addZeros = function () {
+    this.lines();
+    const smallestValue = this.findSmallestValue();
 
     const uncoveredRows = [];
 
-    for (let r = 0; r < n; r ++) {
-        if(coveredRows.indexOf(r) === -1) {
+    for (let r = 0; r < this.n; r ++) {
+        if(this.coveredRows.indexOf(r) === -1) {
             uncoveredRows.push(r);
         }
     }
 
     // subtract smallest value from all uncovered rows
     for (let r = 0; r < uncoveredRows.length; r++) {
-        for (let c = 0; c < n; c ++) {
-            result[uncoveredRows[r]][c] -= smallestValue;
+        for (let c = 0; c < this.n; c ++) {
+            this.adjMatrix[uncoveredRows[r]][c] -= smallestValue;
         }
     }
 
     // add to each covered column
-    for (let c = 0; c < coveredCols.length; c++) {
-        for (let r = 0; r < n; r++) {
-            result[r][coveredCols[c]] += smallestValue;
+    for (let c = 0; c < this.coveredCols.length; c++) {
+        for (let r = 0; r < this.n; r++) {
+            this.adjMatrix[r][this.coveredCols[c]] += smallestValue;
+        }
+    }
+};
+
+Munkres.prototype.resetMarkTable = function () {
+    this.markedTable = [];
+
+    for (let r = 0; r < this.n; r++) {
+        this.markedTable[r] = [];
+        for (let c = 0; c < this.n; c++) {
+            this.markedTable[r][c] = PRISTINE;
+        }
+    }
+};
+
+Munkres.prototype.alternateToFindAssignments = function () {
+
+    let assignmentCount = 0;
+
+    // todo: reduce duplication in this loop
+    while(true) {
+        let tmpMarkTable = this.markedTable.map(row => [...row]);
+        // mark rows
+        for (let r = 0; r < this.n; r++) {
+            let zeroCount = 0, zeroIndex = -1;
+
+            // check if has pristine zeros
+            for (let c = 0; c < this.n; c++) {
+                if(this.adjMatrix[r][c] === 0 && this.markedTable[r][c] === PRISTINE) {
+                    zeroCount++;
+                    zeroIndex = c;
+                }
+            }
+
+            // has single zero and it was not canceled of assigned in this iteration
+            if(zeroCount === 1 && tmpMarkTable[r][zeroIndex] === PRISTINE) {
+
+                // Increase assignment count
+                assignmentCount++;
+
+                // cancel all other zeros in same col
+                for (let r = 0; r < this.n; r++) {
+                    if(this.adjMatrix[r][zeroIndex] === 0) {
+                        tmpMarkTable[r][zeroIndex] = CANCELED
+                    }
+                }
+
+                // mark this the zero we found in this row
+                tmpMarkTable[r][zeroIndex] = MARKED;
+            }
+        }
+
+        // mark cols
+        for (let c = 0; c < this.n; c++) {
+            let zeroCount = 0, zeroIndex = -1;
+
+            for (let r = 0; r < this.n; r++) {
+
+                if(this.adjMatrix[r][c] === 0 && this.markedTable[r][c] === PRISTINE) {
+                    zeroCount++;
+                    zeroIndex = r;
+                }
+            }
+
+            // has single zero and it was not canceled in this iteration
+            if(zeroCount === 1  && tmpMarkTable[zeroIndex][c] === PRISTINE) {
+
+                // Increase assignment count
+                assignmentCount++;
+
+                // cancel all other zeros in same row
+                for (let c = 0; c < this.n; c++) {
+                    if(this.adjMatrix[zeroIndex][c] === 0) {
+                        tmpMarkTable[zeroIndex][c] = CANCELED;
+                    }
+                }
+
+                // mark this the zero we found in this col
+                tmpMarkTable[zeroIndex][c] = MARKED;
+            }
+        }
+
+        if(assignmentCount < this.n) {
+
+            // if has open zeroes continue marking assignments with respect to currently marked and canceled zeros
+            // otherwise add more zeros and then continue with clean markTable and reset assignment count
+            if(this.hasOpenZeros()) {
+                this.markedTable = tmpMarkTable;
+            } else {
+                this.addZeros();
+                this.resetMarkTable();
+                assignmentCount = 0;
+            }
+        } else {
+
+            const matches = [];
+
+            for (let r = 0; r < this.n; r++) {
+                for (let c = 0; c < this.n; c++) {
+                    if(tmpMarkTable[r][c] === MARKED) {
+                        matches.push([r,c]);
+                    }
+                }
+            }
+
+            return matches;
+        }
+    }
+};
+
+Munkres.prototype.compute = function() {
+
+    //initial subtraction
+    for (let r = 0; r < this.n; r++) {
+        const minEntry = Math.min(...this.adjMatrix[r]);
+        for (let c = 0; c < this.n; c++) {
+            this.adjMatrix[r][c] = this.adjMatrix[r][c] - minEntry;
         }
     }
 
-    return result;
+    for (let c = 0; c < this.n; c++) {
+        const minEntry = Math.min(...this.adjMatrix.map(row => row[c]));
+        for (let r = 0; r < this.n; r++) {
+            this.adjMatrix[r][c] = this.adjMatrix[r][c] - minEntry;
+        }
+    }
+
+    return this.alternateToFindAssignments();
+};
+
+Munkres.prototype.hasOpenZeros = function () {
+    for (let r = 0; r < this.n; r++) {
+        for (let c = 0; c < this.n; c++) {
+            if(this.adjMatrix[r][c] === 0 && this.markedTable[r][c] === PRISTINE) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
+
+function munkres(adjMatrix) {
+    return (new Munkres(adjMatrix)).compute();
 }
 
 module.exports = munkres;
