@@ -24,57 +24,67 @@ Munkres.prototype.findSmallestValue = function() {
     return smallestEntry;
 };
 
-Munkres.prototype.lines = function() {
+Munkres.prototype.lines = function () {
 
     // find a row without assignment and get zero indexes - cols from it
     let
-        pickedRows =[],
-        pickedCols = [];
+        tickedRows = [],
+        tickedCols = [];
 
-    let rowWithoutAssignment = null;
     for (let r = 0; r < this.n; r++) {
         let assignment = false;
         for (let c = 0; c < this.n; c++) {
-            if(this.markedTable[r][c] === MARKED) {
+            if (this.markedTable[r][c] === MARKED) {
                 assignment = true;
             }
         }
 
-        if(!assignment) {
-            rowWithoutAssignment = r;
+        if (!assignment) {
+            // pick a row without assigment
+            tickedRows.push(r);
+            break;
         }
     }
 
-    // pick a row without assigment
-    pickedRows.push(rowWithoutAssignment);
+    let colsToTick = [];
+    do {
+        tickedCols = [...tickedCols, ...colsToTick];
+        colsToTick = [];
 
-    // find zeros in a row without assignment and pick cols with this zeros
-    for (let c = 0; c < this.n; c++) {
-        if(this.adjMatrix[rowWithoutAssignment][c] === 0) {
-            pickedCols.push(c);
-        }
-    }
-
-    // find out zeros with assignment in picked columns and mark rows with this zeros
-    for (let r = 0; r < this.n; r++) {
-        for (let c = 0; c < pickedCols.length; c++) {
-            if(this.markedTable[r][pickedCols[c]] === MARKED) {
-                pickedRows.push(r);
+        // find zeros in a row without assignment and pick cols with this zeros
+        for (let r = 0; r < tickedRows.length; r++) {
+            for (let c = 0; c < this.n; c++) {
+                if (this.adjMatrix[tickedRows[r]][c] === 0) {
+                    // col not already picked
+                    if (tickedCols.indexOf(c) === -1) {
+                        colsToTick.push(c);
+                    }
+                }
             }
         }
-    }
+
+        // find out zeros with assignment in picked columns and mark rows with this zeros
+        for (let c = 0; c < colsToTick.length; c++) {
+            for (let r = 0; r < this.n; r++) {
+                if (this.markedTable[r][colsToTick[c]] === MARKED) {
+                    if (tickedRows.indexOf(r) === -1) {
+                        tickedRows.push(r);
+                    }
+                }
+            }
+        }
+    } while (colsToTick.length);
 
     // cover unmarked rows
-    const tmp = [];
+    const untickedRows = [];
     for (let r = 0; r < this.n; r++) {
-        if(pickedRows.indexOf(r) === -1) {
-            tmp.push(r);
+        if (tickedRows.indexOf(r) === -1) {
+            untickedRows.push(r);
         }
     }
-    pickedRows = tmp;
 
-    this.coveredRows = pickedRows;
-    this.coveredCols = pickedCols;
+    this.coveredRows = untickedRows;
+    this.coveredCols = tickedCols;
 };
 
 Munkres.prototype.addZeros = function () {

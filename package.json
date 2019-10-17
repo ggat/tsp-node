@@ -15,7 +15,5 @@
     "webpack": "^4.41.1",
     "webpack-cli": "^3.3.9"
   },
-  "dependencies": {
-    "munkres-js": "^1.2.2"
-  }
+  "dependencies": {}
 }
