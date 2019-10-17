@@ -82,6 +82,29 @@ function matching(adjMatrix, oddVertices) {
     return matches.map(([u, v]) => [uSet[u], vSet[v]]);
 }
 
+function nonPerfectPerfectMatching(weights, oddVertices) {
+
+    // this is a greedy algorithm no really perfect matching
+    const matches = [];
+
+    while(oddVertices.length) {
+        const v1 = oddVertices.pop();
+        let v2Index,
+            closest = Infinity;
+
+        for (let v = 0; v < oddVertices.length; v++) {
+            if(weights[v1][oddVertices[v]] < closest) {
+                closest = weights[v1][oddVertices[v]];
+                v2Index = v;
+            }
+        }
+
+        matches.push([v1, oddVertices.splice(v2Index, 1)[0]]);
+    }
+
+    return matches;
+}
+
 function createEulerTour(mst, matches) {
     return fleury([...mst, ...matches]);
 }
@@ -108,7 +131,7 @@ function christofides(points) {
     const [mst, oddVertices] = prims(weights);
 
     // step 2 get matching
-    const matches = matching(weights, oddVertices);
+    const matches = nonPerfectPerfectMatching(weights, oddVertices);
 
     // step 3 euler
     const euler = createEulerTour(mst, matches);
