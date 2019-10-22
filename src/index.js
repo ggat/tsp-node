@@ -26,16 +26,14 @@ async function readPointsFile(file) {
 readPointsFile(inputFile).then(points => {
     console.info("Start computation...");
 
-    const [tour, distance, executionTimeMs] = christofides(points);
+    const [tour, distance, executionNanos] = christofides(points);
 
     const result = JSON.stringify({
         shortest_path_description: tour,
         shortest_path_size: distance,
-        time_of_execution: (executionTimeMs / 1000) + ' seconds',
+        time_of_execution: (executionNanos / 1000000000) + ' seconds',
     }, null, 4);
 
     fs.writeFileSync(outputFile, result);
 
 }).catch(e => console.log('Error while reading input file', e));
-
-

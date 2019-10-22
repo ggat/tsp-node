@@ -1,37 +1,52 @@
 const munkres = require('./munkres');
-const list = require('./lists');
+const lists = require('./lists');
 const prims = require('./prims');
 const fleury = require('./fleury.js');
 
-function createWeightMatrix(graph) {
+/**
+ *
+ * Calculate distance between points
+ *
+ * @param a
+ * @param b
+ * @returns {number}
+ */
+function distance(a, b) {
+    return Math.sqrt(Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2));
+}
+
+/**
+ *
+ * Create weight - distance adjacency matrix from set of points
+ *
+ * @param points
+ * @returns {[]}
+ */
+function createWeightMatrix(points) {
     const matrix = [];
 
-    for (let i = 0; i < graph.length; i++) {
+    for (let i = 0; i < points.length; i++) {
         matrix[i] = [];
-        for (let j = 0; j < graph.length; j++) {
-            matrix[i][j] = i === j ? Infinity : distance(graph[i], graph[j]);
+        for (let j = 0; j < points.length; j++) {
+            matrix[i][j] = i === j ? Infinity : distance(points[i], points[j]);
         }
     }
 
     return matrix;
 }
 
-function distance(a, b) {
-    return Math.sqrt(Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2));
-}
-
 /**
- * Odd vertices are representing indexes of vertices from original complete vertex set
+ * Generator function to create all possible variants of bipartite graph from even length set of vertices
  *
- * @param oddVertices
  * @param edgeWeights
- * @returns {[]}
+ * @param oddVertices
+ * @returns {IterableIterator<*[]>}
  */
 function* createBipartiteGraphs(edgeWeights, oddVertices) {
 
     //todo: we are creating graphs with same combination of vertices but alternating vSet, uSet
     //  because for matching sides does not matter we are doing twice more redundant work.
-    const uVertexSets = list.combinations(oddVertices, oddVertices.length / 2);
+    const uVertexSets = lists.combinations(oddVertices, oddVertices.length / 2);
 
     // create graphs
     for(const uSet of uVertexSets) {
@@ -59,7 +74,16 @@ function* createBipartiteGraphs(edgeWeights, oddVertices) {
     }
 }
 
-function matching(adjMatrix, oddVertices) {
+/**
+ * TODO: Rewrite to blossom.
+ *
+ * Find minimum perfect matching. Using bruteforce strategy.
+ *
+ * @param adjMatrix
+ * @param oddVertices
+ * @returns {*}
+ */
+function perfectMatching(adjMatrix, oddVertices) {
 
     let minWeight = Infinity,
         bestBipartiteGraph,
@@ -82,33 +106,25 @@ function matching(adjMatrix, oddVertices) {
     return matches.map(([u, v]) => [uSet[u], vSet[v]]);
 }
 
-function nonPerfectPerfectMatching(weights, oddVertices) {
-
-    // this is a greedy algorithm no really perfect matching
-    const matches = [];
-
-    while(oddVertices.length) {
-        const v1 = oddVertices.pop();
-        let v2Index,
-            closest = Infinity;
-
-        for (let v = 0; v < oddVertices.length; v++) {
-            if(weights[v1][oddVertices[v]] < closest) {
-                closest = weights[v1][oddVertices[v]];
-                v2Index = v;
-            }
-        }
-
-        matches.push([v1, oddVertices.splice(v2Index, 1)[0]]);
-    }
-
-    return matches;
-}
-
+/**
+ *
+ * Create Euler tour from MST and matched odd vertices.
+ *
+ * @param mst
+ * @param matches
+ * @returns {[*]}
+ */
 function createEulerTour(mst, matches) {
     return fleury([...mst, ...matches]);
 }
 
+/**
+ *
+ * Shortcut euler tour
+ *
+ * @param euler
+ * @returns {*[]}
+ */
 function createHamiltonianTour(euler) {
     const tour = [];
 
@@ -121,9 +137,14 @@ function createHamiltonianTour(euler) {
     return [...tour, euler[0]];
 }
 
+/**
+ *
+ * Christofides algorithm to solve Travelling Salesman Problem.
+ *
+ * @param points
+ * @returns {*[]}
+ */
 function christofides(points) {
-
-    const executionStart = process.hrtime();
 
     const weights = createWeightMatrix(points);
 
@@ -131,7 +152,7 @@ function christofides(points) {
     const [mst, oddVertices] = prims(weights);
 
     // step 2 get matching
-    const matches = nonPerfectPerfectMatching(weights, oddVertices);
+    const matches = perfectMatching(weights, oddVertices);
 
     // step 3 euler
     const euler = createEulerTour(mst, matches);
@@ -144,10 +165,17 @@ function christofides(points) {
         distance += weights[hamiltonian[v]][hamiltonian[v+1]];
     }
 
-    const hrtime = process.hrtime(executionStart);
-    const executionNanos = hrtime[0] * 1e9 + hrtime[1];
-    return [hamiltonian, distance, executionNanos / 1000000];
-
+    return [hamiltonian, distance];
 }
 
-module.exports = christofides;
+module.exports = points => {
+
+    const executionStart = process.hrtime();
+
+    const result = christofides(points);
+
+    const hrtime = process.hrtime(executionStart);
+    const executionNanos = hrtime[0] * 1e9 + hrtime[1];
+
+    return [...result, executionNanos];
+};
