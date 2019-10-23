@@ -14,7 +14,7 @@ or
 `node src/index.js <input-file> <output-file>`
 
 
-`<input-file>` each line of should contain single point expressed with x,y separated with comma.
+each line of `<input-file>` should contain single point expressed with `x,y` separated with comma.
 
 Build:
 `npm run build`
